@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Jet + Trails</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        /* --- Restored CSS Rules --- */
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px;
+            z-index: 10;
+        }
+         #loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 5px;
+            display: none; /* Start hidden */
+            z-index: 20;
+        }
+        #error-message {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: red;
+            font-size: 18px;
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            display: none; /* Start hidden */
+            text-align: center;
+             z-index: 20;
+        }
+        /* --- End Restored CSS --- */
+    </style>
+      <script type="module" crossorigin src="/assets/index-B72ymVJU.js"></script>
+    </head>
+<body>
+    <div id="loading-indicator">Loading Assets...</div>
+    <div id="error-message"></div>
+    <div id="hud" style="position: absolute; top: 10px; left: 10px; color: white; background-color: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; font-family: sans-serif; font-size: 14px;">
+        <div>Speed: <span id="speed-value">0.0</span> m/s</div>
+        <div>Altitude: <span id="altitude-value">0.0</span> m</div>
+      </div>
+
+
+</body>
+</html>
