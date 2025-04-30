@@ -1,11 +1,6 @@
-// js/main.js - Physics Controls + Visual Enhancements (Final Touches)
-
-// --- Imports ---
-import * as THREE from '../node_modules/three/build/three.module.js'; // Common location
-console.log("--- DEBUG: THREE object immediately after import:", THREE);
-// This path *might* be correct IF node_modules is deployed and main.js is one level deep
-import { GLTFLoader } from '../node_modules/three/examples/jsm/loaders/GLTFLoader.js';
-import GUI from '../node_modules/lil-gui/dist/lil-gui.esm.js'; // Common location for ES Modules
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import GUI from 'lil-gui';
 
 const clock = new THREE.Clock();
 
