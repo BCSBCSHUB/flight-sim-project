@@ -1,10 +1,9 @@
  /* style.css */
 
  /* --- Global Styles --- */
- /* Reverted: Removed height: 100% from html, body */
  html, body {
     width: 100%;
-    /* height: 100%; */ /* <-- REVERTED */
+    height: 100%; /* <-- MODIFIED: Set html and body height to 100% */
     margin: 0;
     padding: 0;
     overflow: hidden; /* Prevent scrollbars */
@@ -14,7 +13,10 @@
 canvas {
     display: block; /* Prevent potential spacing issues below canvas */
     width: 100%;
-    /* height: 100%; */ /* <-- REVERTED */
+    /* height: 100%; */ /* <-- KEPT REVERTED: Let JS handle height */
+    /* Ensure no other styles are accidentally setting a small fixed height */
+    max-height: 100vh; /* Optional: Prevent canvas exceeding viewport height */
+
 }
 /* --- End Global Styles --- */
 
