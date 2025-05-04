@@ -1,10 +1,12 @@
-# Simple workflow for deploying static content to GitHub Pages
+# .github/workflows/deploy.yml
+
+# Simple workflow for deploying static content (like a Vite build) to GitHub Pages
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting the 'master' branch
   push:
-    branches: ['main'] # Or 'master' if that's your default branch
+    branches: ['master'] # *** MODIFIED: Changed from 'main' to 'master' ***
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -22,41 +24,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+  # Single deploy job since we're just deploying static files
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      url: ${{ steps.deployment.outputs.page_url }} # The URL of the deployed page
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
     steps:
+      # Step 1: Check out the repository's code
       - name: Checkout
-        uses: actions/checkout@v4 # Updated to v4
+        uses: actions/checkout@v4 # Use version 4 of the checkout action
 
+      # Step 2: Set up Node.js environment
       - name: Set up Node.js
-        uses: actions/setup-node@v4 # Updated to v4
+        uses: actions/setup-node@v4 # Use version 4 of the setup-node action
         with:
-          node-version: 22 # Use the Node.js version your project requires
-          cache: 'npm'   # Or 'yarn', 'pnpm'
+          # Specify the Node.js version to use (ensure it matches your project needs)
+          node-version: 20 # Using Node 20 LTS - adjust if needed (e.g., 18, 22)
+          # Cache npm dependencies for faster subsequent runs
+          cache: 'npm'   # Use 'yarn' or 'pnpm' if you use those package managers
 
+      # Step 3: Install project dependencies
       - name: Install dependencies
-        run: npm ci # 'ci' is generally recommended for CI environments, faster and stricter than 'install'
+        # 'npm ci' is recommended for CI as it uses package-lock.json for exact versions
+        run: npm ci
         # Or use: yarn install --frozen-lockfile
         # Or use: pnpm install --frozen-lockfile
 
+      # Step 4: Build the project using the build script from package.json
       - name: Build
+        # Runs the script defined as "build" in your package.json (usually 'vite build')
         run: npm run build
         # Or use: yarn build
         # Or use: pnpm build
 
+      # Step 5: Configure GitHub Pages
       - name: Setup Pages
-        uses: actions/configure-pages@v5 # Updated to v5
+        uses: actions/configure-pages@v5 # Use version 5
 
+      # Step 6: Upload the build output (from the 'dist' folder) as a GitHub Pages artifact
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3 # Updated to v3
+        uses: actions/upload-pages-artifact@v3 # Use version 3
         with:
-          # Upload contents of the 'dist' directory from the build step
+          # Specify the path to the directory containing the built files
           path: './dist'
 
+      # Step 7: Deploy the uploaded artifact to GitHub Pages
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4 # Updated to v4
+        id: deployment # Assign an ID to this step to reference its outputs (like the URL)
+        uses: actions/deploy-pages@v4 # Use version 4
