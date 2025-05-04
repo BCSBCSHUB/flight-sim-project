@@ -1,6 +1,25 @@
-/* style.css */
- /* --- Restored CSS Rules --- */
- #info {
+ /* style.css */
+
+ /* --- Global Styles --- */
+ html, body {
+    width: 100%;
+    height: 100%; /* Ensure html and body take full viewport height */
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent scrollbars */
+    background-color: #000; /* Ensure body background is set if needed */
+}
+
+canvas {
+    display: block; /* Prevent potential spacing issues below canvas */
+    width: 100%;
+    height: 100%; /* Ensure canvas takes full viewport height */
+}
+/* --- End Global Styles --- */
+
+
+/* --- HUD, Loading, Error Styles --- */
+#info { /* Assuming this might be legacy or unused? HUD div below uses inline styles */
     position: absolute;
     top: 10px;
     left: 10px;
@@ -8,9 +27,9 @@
     font-family: monospace;
     background-color: rgba(0,0,0,0.5);
     padding: 5px;
-    z-index: 10;
+    z-index: 10; /* Ensure HUD is above canvas */
 }
- #loading-indicator {
+#loading-indicator {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -22,7 +41,7 @@
     padding: 20px;
     border-radius: 5px;
     display: none; /* Start hidden */
-    z-index: 20;
+    z-index: 20; /* Above other elements */
 }
 #error-message {
     position: absolute;
@@ -37,58 +56,57 @@
     border-radius: 5px;
     display: none; /* Start hidden */
     text-align: center;
-     z-index: 20;
+    z-index: 20; /* Above other elements */
 }
-/* --- End Restored CSS --- */
+/* --- End HUD, Loading, Error Styles --- */
+
+
+/* --- Joystick Zone Styles --- */
 .joystick-zone {
     position: absolute;
-    bottom: 50px; /* Adjust as needed */
-    width: 150px;  /* Adjust as needed */
-    height: 150px; /* Adjust as needed */
-    /* background-color: rgba(0, 0, 0, 0.2); */ /* Optional: visible zone */
-    opacity: 0.7; /* Default opacity */
-    transition: opacity 0.3s ease; /* Smooth transition for opacity changes */
-    z-index: 10; /* Ensure they are above the canvas */
-    /* Prevent touch events on the zone itself interfering if needed */
+    bottom: 50px; /* Position from bottom */
+    width: 150px;  /* Zone width */
+    height: 150px; /* Zone height */
+    /* background-color: rgba(255, 0, 0, 0.2); */ /* DEBUG: Uncomment to see the zone area */
+    opacity: 0.7; /* Default semi-transparency */
+    transition: opacity 0.3s ease;
+    z-index: 10; /* Ensure zones are above canvas (default z-index 0) */
+    /* Prevent the zone DIV itself from capturing touch/click events */
     pointer-events: none;
 }
 
-/* Allow pointer events on the joystick element created by nipplejs */
+/* Allow touch/click events ONLY on the actual joystick element created by nipplejs */
 .joystick-zone > .nipple {
      pointer-events: auto;
 }
 
-
+/* Position the left zone */
 #joystick-zone-left {
-    left: 30px; /* Adjust as needed */
+    left: 30px; /* Position from left */
 }
 
+/* Position the right zone */
 #joystick-zone-right {
-    right: 30px; /* Adjust as needed */
+    right: 30px; /* Position from right */
 }
+/* --- End Joystick Zone Styles --- */
 
-/* Optional: Hide on non-touch devices or change opacity on hover */
+
+/* --- Desktop/Hover Styles (Currently Inactive) --- */
+/* Optional: Styles for devices that support hover (like desktop) */
 .joystick-zone:hover {
-   /* opacity: 1.0; */
+   /* opacity: 1.0; */ /* Example: Make fully opaque on hover */
 }
 
-/* You might want to hide them completely on non-touch devices */
+/* Media query for devices with hover capability and fine pointer (mouse) */
 @media (hover: hover) and (pointer: fine) {
   .joystick-zone {
-     /* Consider uncommenting this to hide on desktop: */
+     /* Rules here apply ONLY on devices like desktops */
+     /* Consider uncommenting this to hide joysticks on desktop: */
      /* display: none;  */
-     /* Or just make less visible */
+
+     /* Or just make them less visible on desktop: */
      /* opacity: 0.2; */
   }
 }
-
-/* Add any other global styles you need below */
-
-body {
-  margin: 0;
-  overflow: hidden; /* Prevent scrollbars */
-}
-
-canvas {
-    display: block; /* Prevent potential spacing issues */
-}
+/* --- End Desktop/Hover Styles --- */
