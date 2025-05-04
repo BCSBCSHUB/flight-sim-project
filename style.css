@@ -1,0 +1,54 @@
+/* style.css */
+
+.joystick-zone {
+    position: absolute;
+    bottom: 50px; /* Adjust as needed */
+    width: 150px;  /* Adjust as needed */
+    height: 150px; /* Adjust as needed */
+    /* background-color: rgba(0, 0, 0, 0.2); */ /* Optional: visible zone */
+    opacity: 0.7; /* Default opacity */
+    transition: opacity 0.3s ease; /* Smooth transition for opacity changes */
+    z-index: 10; /* Ensure they are above the canvas */
+    /* Prevent touch events on the zone itself interfering if needed */
+    pointer-events: none;
+}
+
+/* Allow pointer events on the joystick element created by nipplejs */
+.joystick-zone > .nipple {
+     pointer-events: auto;
+}
+
+
+#joystick-zone-left {
+    left: 30px; /* Adjust as needed */
+}
+
+#joystick-zone-right {
+    right: 30px; /* Adjust as needed */
+}
+
+/* Optional: Hide on non-touch devices or change opacity on hover */
+.joystick-zone:hover {
+   /* opacity: 1.0; */
+}
+
+/* You might want to hide them completely on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .joystick-zone {
+     /* Consider uncommenting this to hide on desktop: */
+     /* display: none;  */
+     /* Or just make less visible */
+     /* opacity: 0.2; */
+  }
+}
+
+/* Add any other global styles you need below */
+
+body {
+  margin: 0;
+  overflow: hidden; /* Prevent scrollbars */
+}
+
+canvas {
+    display: block; /* Prevent potential spacing issues */
+}

@@ -1,6 +1,9 @@
+import '../style.css'; // <-- ADD THIS LINE AT THE TOP
+import nipplejs from 'nipplejs';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import GUI from 'lil-gui';
+
 
 const clock = new THREE.Clock();
 
@@ -9,7 +12,7 @@ let aircraftModel;
 let actualModelMeshGroup; // The actual mesh group from the GLTF
 let playerVelocity = new THREE.Vector3();
 let playerAngularVelocity = new THREE.Vector3();
-const INITIAL_AIRCRAFT_POS = new THREE.Vector3(); // To store the starting position
+const INITIAL_AIRCRAFT_POS = new THREE.Vector3(); // To store the starting positiongirt
 const INITIAL_AIRCRAFT_QUAT = new THREE.Quaternion(); // To store starting rotation
 let isCrashing = false; // Flag to manage crash state
 let crashResetTimeout = null; // Timeout ID for delayed reset
