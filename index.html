@@ -2,67 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Jet + Trails</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>Physics Jet + Trails</title>
     <style>
+        /* Minimal essential styles if needed, otherwise keep in style.css */
         body { margin: 0; overflow: hidden; background-color: #000; }
         canvas { display: block; }
-        /* --- Restored CSS Rules --- */
-        #info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: monospace;
-            background-color: rgba(0,0,0,0.5);
-            padding: 5px;
-            z-index: 10;
-        }
-         #loading-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 24px;
-            font-family: monospace;
-            background-color: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 5px;
-            display: none; /* Start hidden */
-            z-index: 20;
-        }
-        #error-message {
-            position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: red;
-            font-size: 18px;
-            font-family: monospace;
-            background-color: rgba(0,0,0,0.8);
-            padding: 15px;
-            border-radius: 5px;
-            display: none; /* Start hidden */
-            text-align: center;
-             z-index: 20;
-        }
-        /* --- End Restored CSS --- */
     </style>
-    </head>
+</head>
 <body>
-    <div id="loading-indicator">Loading Assets...</div>
-    <div id="error-message"></div>
-    <div id="hud" style="position: absolute; top: 10px; left: 10px; color: white; background-color: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; font-family: sans-serif; font-size: 14px;">
+    <div id="hud" style="position: absolute; top: 10px; left: 10px; color: white; background-color: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; font-family: sans-serif; font-size: 14px; z-index: 10;">
         <div>Speed: <span id="speed-value">0.0</span> m/s</div>
         <div>Altitude: <span id="altitude-value">0.0</span> m</div>
-      </div>
-      <canvas id="webgl"></canvas>
+    </div>
+
+    <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; font-family: monospace; background-color: rgba(0,0,0,0.7); padding: 20px; border-radius: 5px; display: none; z-index: 20;">Loading Assets...</div>
+    <div id="error-message" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 18px; font-family: monospace; background-color: rgba(0,0,0,0.8); padding: 15px; border-radius: 5px; display: none; text-align: center; z-index: 20;"></div>
+
+    <canvas id="webgl"></canvas>
 
     <div id="joystick-zone-left" class="joystick-zone"></div>
     <div id="joystick-zone-right" class="joystick-zone"></div>
 
-<script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/main.js"></script>
 
 </body>
 </html>
