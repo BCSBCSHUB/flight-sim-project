@@ -3,26 +3,24 @@
  /* --- Global Styles --- */
  html, body {
     width: 100%;
-    height: 100%; /* <-- Set html and body height to 100% */
+    height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden; /* Prevent scrollbars */
-    background-color: #000; /* Ensure body background is set if needed */
+    background-color: #000; /* Fallback background, though scene should cover it */
 }
 
 canvas {
-    display: block; /* Prevent potential spacing issues below canvas */
+    display: block; /* Important to remove extra space below the canvas */
     width: 100%;
-    /* height: 100%; */ /* <-- KEPT REVERTED: Let JS handle height */
-    /* Ensure no other styles are accidentally setting a small fixed height */
-    /* max-height: 100vh; */ /* <-- REMOVED this line */
-
+    height: 100%; /* Make canvas fill the body */
 }
 /* --- End Global Styles --- */
 
 
 /* --- HUD, Loading, Error Styles --- */
-#info { /* Assuming this might be legacy or unused? HUD div below uses inline styles */
+/* These are absolutely positioned and should not interfere with canvas layout */
+#info {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -30,7 +28,7 @@ canvas {
     font-family: monospace;
     background-color: rgba(0,0,0,0.5);
     padding: 5px;
-    z-index: 10; /* Ensure HUD is above canvas */
+    z-index: 10;
 }
 #loading-indicator {
     position: absolute;
@@ -44,7 +42,7 @@ canvas {
     padding: 20px;
     border-radius: 5px;
     display: none; /* Start hidden */
-    z-index: 20; /* Above other elements */
+    z-index: 20;
 }
 #error-message {
     position: absolute;
@@ -59,57 +57,44 @@ canvas {
     border-radius: 5px;
     display: none; /* Start hidden */
     text-align: center;
-    z-index: 20; /* Above other elements */
+    z-index: 20;
 }
 /* --- End HUD, Loading, Error Styles --- */
 
 
 /* --- Joystick Zone Styles --- */
+/* These are also absolutely positioned */
 .joystick-zone {
     position: absolute;
-    bottom: 50px; /* Position from bottom */
-    width: 150px;  /* Zone width */
-    height: 150px; /* Zone height */
-    /* background-color: rgba(255, 0, 0, 0.2); */ /* DEBUG: Uncomment to see the zone area */
-    opacity: 0.7; /* Default semi-transparency */
+    bottom: 50px;
+    width: 150px;
+    height: 150px;
+    opacity: 0.7;
     transition: opacity 0.3s ease;
-    z-index: 10; /* Ensure zones are above canvas (default z-index 0) */
-    /* Prevent the zone DIV itself from capturing touch/click events */
+    z-index: 10;
     pointer-events: none;
+    /* background-color: rgba(0, 255, 0, 0.2); */ /* DEBUG: Green to see zones */
 }
 
-/* Allow touch/click events ONLY on the actual joystick element created by nipplejs */
 .joystick-zone > .nipple {
      pointer-events: auto;
 }
 
-/* Position the left zone */
 #joystick-zone-left {
-    left: 30px; /* Position from left */
+    left: 30px;
 }
 
-/* Position the right zone */
 #joystick-zone-right {
-    right: 30px; /* Position from right */
+    right: 30px;
 }
 /* --- End Joystick Zone Styles --- */
 
 
-/* --- Desktop/Hover Styles (Currently Inactive) --- */
-/* Optional: Styles for devices that support hover (like desktop) */
-.joystick-zone:hover {
-   /* opacity: 1.0; */ /* Example: Make fully opaque on hover */
-}
-
-/* Media query for devices with hover capability and fine pointer (mouse) */
+/* --- Desktop/Hover Styles (Media Query) --- */
 @media (hover: hover) and (pointer: fine) {
   .joystick-zone {
-     /* Rules here apply ONLY on devices like desktops */
-     /* Consider uncommenting this to hide joysticks on desktop: */
-     /* display: none;  */
-
-     /* Or just make them less visible on desktop: */
-     /* opacity: 0.2; */
+     /* opacity: 0.2; */ /* Example: Make less visible on desktop */
+     /* display: none; */ /* Example: Hide on desktop */
   }
 }
 /* --- End Desktop/Hover Styles --- */
