@@ -22,8 +22,8 @@ let crashResetTimeout = null; // Timeout ID for delayed reset
 
 // --- Trail Variables ---
 let leftWingTrail, rightWingTrail; // THREE.Points objects
-let leftWingTip, rightWingTip;     // THREE.Object3D helpers
-let particleTexture = null;        // Loaded from 'assets/particle.png'
+let leftWingTip, rightWingTip;      // THREE.Object3D helpers
+let particleTexture = null;         // Loaded from 'assets/particle.png'
 const MAX_TRAIL_PARTICLES = 500;
 let currentTrailIndex = { left: 0, right: 0 };
 const OFF_SCREEN_POS = new THREE.Vector3(1e10, 1e10, 1e10);
@@ -78,7 +78,6 @@ const CRASH_VELOCITY_THRESHOLD = -15.0; // Min downward velocity (Y) to trigger 
 const CRASH_RESET_DELAY = 500; // Delay in milliseconds before resetting after crash
 
 // --- Control Parameters ---
-// Using values from user's last provided screenshot as defaults
 const controlParams = {
     // Flight
     thrustAcceleration: 50.0, afterburnerMultiplier: 2.5, maxSpeed: 80.0,
@@ -168,8 +167,8 @@ loader.load( './models/f16.gltf', (gltf) => {
             actualModelMeshGroup.add(leftWingTip); actualModelMeshGroup.add(rightWingTip);
             console.log("Wingtip helper objects added.");
             engineNozzleLeft = new THREE.Object3D(); engineNozzleRight = new THREE.Object3D();
-            engineNozzleLeft.position.set(-0.8, 1.9, 7.0); // Using user's values
-            engineNozzleRight.position.set(0.8, 1.9, 7.0); // Using user's values
+            engineNozzleLeft.position.set(-0.8, 1.9, 7.0); 
+            engineNozzleRight.position.set(0.8, 1.9, 7.0); 
             actualModelMeshGroup.add(engineNozzleLeft); actualModelMeshGroup.add(engineNozzleRight);
             console.log("UPDATED Engine nozzle helper objects (Left & Right) added.");
             actualModelMeshGroup.traverse((child) => { if (child.isMesh) { child.castShadow = true; } });
@@ -193,14 +192,14 @@ let joystickRight = null;
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 console.log("Is Touch Device:", isTouchDevice);
 
-// Store the state from the joysticks (values typically range -1 to 1)
+// Store the state from the joysticks (values typically range -1 to 1, or 0 to 1 for thrust)
 const touchControls = {
-    pitch: 0,   // Up/Down from left stick (-1 to 1)
-    roll: 0,    // Left/Right from left stick (-1 to 1)
-    thrust: 0,  // Up/Down from right stick (0 to 1, or -1 to 1 depending on mapping)
-    yaw: 0,     // Left/Right from right stick (-1 to 1)
-    brake: false, // Could add a brake button later
-    afterburner: false // Could add an afterburner button later
+    pitch: 0,       // Up/Down from left stick (-1 to 1)
+    roll: 0,        // Left/Right from left stick (-1 to 1)
+    thrust: 0,      // Up/Down from right stick (0 to 1)
+    yaw: 0,         // Will no longer be controlled by right joystick, but keep for structure
+    brake: false,   // Could add a brake button later
+    afterburner: false // Controlled by pushing right stick fully up
 };
 
 // Configuration for the joysticks
@@ -216,7 +215,7 @@ const joystickOptions = {
 
 // Function to create joysticks (called only on touch devices)
 function setupJoysticks() {
-    console.log("Setting up virtual joysticks...");
+    console.log("Setting up virtual joysticks with new mapping...");
     const zoneLeft = document.getElementById('joystick-zone-left');
     const zoneRight = document.getElementById('joystick-zone-right');
 
@@ -227,21 +226,24 @@ function setupJoysticks() {
 
     // --- Left Joystick (Pitch / Roll) ---
     joystickLeft = nipplejs.create({
-        ...joystickOptions,
+        ...joystickOptions, 
         zone: zoneLeft,
-        position: { left: '50%', bottom: '50%' }, // Position within the left zone div
+        position: { left: '50%', bottom: '50%' },
     });
 
     joystickLeft.on('move', (evt, data) => {
-        const maxDistance = joystickOptions.size / 2; // Max distance from center
+        const maxDistance = joystickOptions.size / 2;
         const distance = Math.min(data.distance, maxDistance);
         const angle = data.angle.radian;
         const force = distance / maxDistance; // Normalized force (0 to 1)
 
-        // Map angle and force to pitch and roll (-1 to 1)
-        // Invert pitch because angle 0 is right, PI/2 is up, PI is left, 3PI/2 is down
+        // Horizontal movement for Roll (A/D like)
         touchControls.roll = Math.cos(angle) * force;
-        touchControls.pitch = -Math.sin(angle) * force; // Negative sin for up = positive pitch input
+
+        // Vertical movement for Pitch (W/S like)
+        // Stick UP (angle PI/2) -> sin(angle)=1 -> pitch = force (positive, nose up)
+        // Stick DOWN (angle 3PI/2) -> sin(angle)=-1 -> pitch = -force (negative, nose down)
+        touchControls.pitch = Math.sin(angle) * force;
     });
 
     joystickLeft.on('end', () => {
@@ -249,38 +251,37 @@ function setupJoysticks() {
         touchControls.roll = 0;
     });
 
-    // --- Right Joystick (Thrust / Yaw) ---
+    // --- Right Joystick (Thrust / Afterburner) ---
     joystickRight = nipplejs.create({
-        ...joystickOptions,
+        ...joystickOptions, 
         zone: zoneRight,
-        position: { right: '50%', bottom: '50%' }, // Position within the right zone div
+        position: { right: '50%', bottom: '50%' },
     });
 
     joystickRight.on('move', (evt, data) => {
         const maxDistance = joystickOptions.size / 2;
         const distance = Math.min(data.distance, maxDistance);
-        const angle = data.angle.radian;
-        const force = distance / maxDistance; // Normalized force (0 to 1)
+        const angle = data.angle.radian; 
+        const force = distance / maxDistance; 
 
-        // Map horizontal movement to Yaw (-1 to 1)
-        touchControls.yaw = Math.cos(angle) * force;
-
-        // Map vertical movement to Thrust (0 to 1 for forward thrust)
-        // Only consider upward movement for thrust increase
         const verticalForce = Math.sin(angle) * force;
-        touchControls.thrust = Math.max(0, verticalForce); // Upward movement (angle PI/2) increases thrust
+        touchControls.thrust = Math.max(0, verticalForce);
 
-        // Optional: Could map downward movement to braking if desired
-        // touchControls.brake = (verticalForce < -0.5); // Example threshold
+        if (verticalForce > 0.9 && force > 0.9) {
+            touchControls.afterburner = true;
+        } else {
+            touchControls.afterburner = false;
+        }
+        touchControls.yaw = 0; // Yaw is no longer controlled by this joystick
     });
 
     joystickRight.on('end', () => {
-        touchControls.yaw = 0;
         touchControls.thrust = 0;
-        // touchControls.brake = false; // Reset brake if mapped
+        touchControls.yaw = 0; 
+        touchControls.afterburner = false; 
     });
 
-    console.log("Virtual joysticks initialized.");
+    console.log("Virtual joysticks initialized with new mapping.");
 }
 // --- End Touch Controls Setup ---
 
@@ -364,7 +365,16 @@ function updateEngineBurn(deltaTime) {
     material.uniforms.uTime.value = currentTime;
 
     // Determine if thrust is active (either keyboard or touch)
-    const thrustActive = isTouchDevice ? (touchControls.thrust > 0.1) : keys[' ']; // Use a small threshold for touch thrust
+    // For touch, thrustInput (from touchControls.thrust) is already 0-1.
+    // For keyboard, keys[' '] makes thrustInput 1.0.
+    // So, thrustActive can be based on the thrustInput variable after it's set.
+    let currentThrustInput = 0;
+    if (isTouchDevice) {
+        currentThrustInput = touchControls.thrust;
+    } else {
+        if (keys[' ']) currentThrustInput = 1.0;
+    }
+    const thrustActive = currentThrustInput > 0.1; // Use a small threshold
 
     let particlesToEmit = 0;
     if (thrustActive) {
@@ -446,20 +456,13 @@ function resetSimulation() {
     console.log("--- Resetting Aircraft Position & Physics ---");
     if (!aircraftModel) return;
 
-    // Reset position and rotation
     aircraftModel.position.copy(INITIAL_AIRCRAFT_POS);
     aircraftModel.quaternion.copy(INITIAL_AIRCRAFT_QUAT);
 
-    // Reset physics state
     playerVelocity.set(0, 0, 0);
     playerAngularVelocity.set(0, 0, 0);
-
-    // Make aircraft visible again
     aircraftModel.visible = true;
-
-    // Reset crash flag
     isCrashing = false;
-    // Clear any pending reset timeout (safety check)
     if (crashResetTimeout) {
         clearTimeout(crashResetTimeout);
         crashResetTimeout = null;
@@ -475,43 +478,33 @@ function initPhysicsAndScenery() {
     if (!actualModelMeshGroup) { console.error("INIT: Aborting - actualModelMeshGroup missing!"); return; }
 
     playerVelocity.set(0, 0, 0); playerAngularVelocity.set(0, 0, 0);
-    isCrashing = false; // Ensure crash flag is reset on init
-    if (crashResetTimeout) { // Clear any lingering timeout from previous runs
+    isCrashing = false; 
+    if (crashResetTimeout) { 
         clearTimeout(crashResetTimeout);
         crashResetTimeout = null;
     }
-    aircraftModel.visible = true; // Ensure aircraft is visible on init
+    aircraftModel.visible = true; 
 
+    createProceduralScenery(); 
+    createSun(); 
 
-    createProceduralScenery(); // Creates terrain, water, trees, lava
-    createSun(); // Create the visual sun
-
-    // Set initial aircraft position AND store it for reset
     if (terrainMesh) { const startX = 0, startZ = TERRAIN_SIZE / 3; try { const terrainHeightAtStart = getProceduralTerrainHeight(startX, startZ); const startY = Math.max(terrainHeightAtStart, WATER_LEVEL) + 150; INITIAL_AIRCRAFT_POS.set(startX, startY, startZ); aircraftModel.position.copy(INITIAL_AIRCRAFT_POS); console.log(`Aircraft initial position set and stored: ${startX.toFixed(1)}, ${startY.toFixed(1)}, ${startZ.toFixed(1)}`); } catch(e) { console.error("Error getting terrain height for initial aircraft position. Using default.", e); INITIAL_AIRCRAFT_POS.set(startX, 200, startZ); aircraftModel.position.copy(INITIAL_AIRCRAFT_POS); }
     } else { console.error("INIT: Cannot set initial aircraft position accurately as terrain failed to create."); INITIAL_AIRCRAFT_POS.set(0, 200, TERRAIN_SIZE / 3); aircraftModel.position.copy(INITIAL_AIRCRAFT_POS); }
-    // Initial rotation is stored after model load
 
-    // Initialize particle systems if texture loaded
     if (particleTexture) {
         if (leftWingTip && rightWingTip) { createTrailSystems(); }
         else { console.error("INIT: Cannot create trail systems - wingtip helpers missing."); }
-
         createVolcanoSmokeSystem();
-
         if (engineNozzleLeft && engineNozzleRight) { createEngineBurnSystem(); }
         else { console.error("INIT: Cannot create engine burn system - one or both nozzle helpers missing."); }
-
-        createCrashExplosionSystem(); // Create the explosion system
-
+        createCrashExplosionSystem(); 
     } else {
          console.warn("INIT: Particle texture missing, ALL effects disabled.");
     }
 
-    // --- Initialize Touch Controls if on Touch Device ---
     if (isTouchDevice) {
         setupJoysticks();
     } else {
-        // Optionally hide joystick zones on non-touch devices
         try {
             document.querySelectorAll('.joystick-zone').forEach(el => el.style.display = 'none');
             console.log("Hiding joystick zones on non-touch device.");
@@ -527,86 +520,70 @@ function initPhysicsAndScenery() {
 // --- Animation Loop ---
 function animate() {
     requestAnimationFrame(animate);
-    const deltaTime = Math.min(clock.getDelta(), 0.1); // Get delta time, cap at 0.1s
+    const deltaTime = Math.min(clock.getDelta(), 0.1); 
     let currentSpeed = 0; let currentAltitude = 0;
 
-    // --- Update Effects FIRST ---
     if (particleTexture) {
         updateTrails(deltaTime);
         updateVolcanoSmoke(deltaTime);
         updateEngineBurn(deltaTime);
-        updateCrashExplosion(deltaTime); // Update explosion particles
+        updateCrashExplosion(deltaTime); 
     }
 
-
     if (aircraftModel && typeof THREE !== 'undefined') {
-        // --- Update Physics and Position only if NOT crashing ---
         if (!isCrashing) {
             try {
-                // --- Get Input Values (Touch OR Keyboard) ---
                 let pitchInput = 0;
                 let rollInput = 0;
                 let yawInput = 0;
-                let thrustInput = 0; // Range 0 to 1 typically
+                let thrustInput = 0; 
                 let brakeInput = false;
-                let afterburnerInput = false;
+                let afterburnerInput = false; // Combined afterburner flag
 
                 if (isTouchDevice) {
-                    // Use touch controls if available and active
-                    pitchInput = touchControls.pitch; // Already -1 to 1
-                    rollInput = touchControls.roll;   // Already -1 to 1
-                    yawInput = touchControls.yaw;     // Already -1 to 1
-                    thrustInput = touchControls.thrust; // Already 0 to 1 (or potentially other range based on joystick mapping)
-                    // brakeInput = touchControls.brake; // If brake button/mapping added
-                    // afterburnerInput = touchControls.afterburner; // If afterburner button added
+                    pitchInput = touchControls.pitch; 
+                    rollInput = touchControls.roll;   
+                    // yawInput = touchControls.yaw; // Yaw is not set by joysticks anymore
+                    thrustInput = touchControls.thrust; 
+                    // brakeInput = touchControls.brake; // If you implement a touch brake
+                    afterburnerInput = touchControls.afterburner; // Use the value from touchControls
                 } else {
-                    // Use keyboard controls if not a touch device
-                    if (keys['w']) pitchInput = 1.0;  // W = Pitch Up (positive input)
-                    if (keys['s']) pitchInput = -1.0; // S = Pitch Down (negative input)
-                    if (keys['a']) rollInput = 1.0;   // A = Roll Left (positive input)
-                    if (keys['d']) rollInput = -1.0;  // D = Roll Right (negative input)
-                    // Add Q/E for Yaw if desired
-                    // if (keys['q']) yawInput = 1.0; // Q = Yaw Left
-                    // if (keys['e']) yawInput = -1.0; // E = Yaw Right
-                    if (keys[' ']) thrustInput = 1.0; // Space = Full Thrust
-                    if (keys['b']) brakeInput = true; // B = Brake
-                    if (keys['shift']) afterburnerInput = true; // Shift = Afterburner
+                    // Keyboard controls
+                    if (keys['w']) pitchInput = 1.0;  // W = Pitch Up (user confirmed this preference)
+                    if (keys['s']) pitchInput = -1.0; // S = Pitch Down
+                    if (keys['a']) rollInput = 1.0;   
+                    if (keys['d']) rollInput = -1.0;  
+                    // if (keys['q']) yawInput = 1.0; 
+                    // if (keys['e']) yawInput = -1.0; 
+                    if (keys[' ']) thrustInput = 1.0; 
+                    if (keys['b']) brakeInput = true; 
+                    if (keys['shift']) afterburnerInput = true; // Keyboard afterburner
                 }
 
-                // --- Physics (Rotation) ---
-                // Map input values (-1 to 1) to target rotation rates
-                let targetPitch = pitchInput * controlParams.pitchRate; // Pitch Rate determines max rotation speed
-                let targetRoll = rollInput * controlParams.rollRate;   // Roll Rate
-                let targetYaw = yawInput * controlParams.yawRate;     // Yaw Rate (if mapped)
+                let targetPitch = pitchInput * controlParams.pitchRate; 
+                let targetRoll = rollInput * controlParams.rollRate;   
+                let targetYaw = yawInput * controlParams.yawRate;      
 
-                // Apply angular velocity changes based on target rates
                 playerAngularVelocity.x += (targetPitch - playerAngularVelocity.x) * controlParams.angularAdjustFactor * deltaTime;
                 playerAngularVelocity.y += (targetYaw - playerAngularVelocity.y) * controlParams.angularAdjustFactor * deltaTime;
                 playerAngularVelocity.z += (targetRoll - playerAngularVelocity.z) * controlParams.angularAdjustFactor * deltaTime;
 
-                // Apply damping
-                const effectiveAngularDamping = Math.pow(controlParams.angularDamping, deltaTime * 60); // Frame-rate independent damping
+                const effectiveAngularDamping = Math.pow(controlParams.angularDamping, deltaTime * 60); 
                 playerAngularVelocity.multiplyScalar(effectiveAngularDamping);
 
-                // Apply rotation delta to the aircraft model
                 const deltaRot = playerAngularVelocity.clone().multiplyScalar(deltaTime);
-                const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), deltaRot.x); // Pitch around local X
-                const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), deltaRot.y); // Yaw around local Y
-                const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), deltaRot.z); // Roll around local Z
+                const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), deltaRot.x); 
+                const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), deltaRot.y); 
+                const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), deltaRot.z); 
 
-                // Apply rotations in YXZ order (common for aircraft/FPS) - adjust if needed
                 aircraftModel.quaternion.multiply(qy).multiply(qx).multiply(qz);
-                if (aircraftModel.quaternion.lengthSq() > 1e-6) aircraftModel.quaternion.normalize(); // Prevent quaternion drift
+                if (aircraftModel.quaternion.lengthSq() > 1e-6) aircraftModel.quaternion.normalize(); 
 
-                // --- Physics (Velocity/Position) ---
-                // Calculate thrust force based on input (0 to 1) and afterburner state
                 let currentThrustForce = thrustInput * controlParams.thrustAcceleration * (afterburnerInput ? controlParams.afterburnerMultiplier : 1.0);
 
-                // Apply thrust along the aircraft's forward direction
                 forwardDirection.set(0, 0, -1).applyQuaternion(aircraftModel.quaternion).normalize();
                 accelerationVector.copy(forwardDirection).multiplyScalar(currentThrustForce * deltaTime);
 
-                // Apply braking force opposite to current velocity
                 brakingVector.set(0, 0, 0);
                 if (brakeInput && playerVelocity.lengthSq() > 0.01) {
                     if(playerVelocity.lengthSq() > 1e-6) {
@@ -614,63 +591,52 @@ function animate() {
                     }
                 }
 
-                // Update velocity with acceleration, braking, and drag
                 playerVelocity.add(accelerationVector);
                 playerVelocity.add(brakingVector);
                 const dragForce = playerVelocity.clone().multiplyScalar(-controlParams.linearDragFactor * deltaTime);
                 playerVelocity.add(dragForce);
 
-                // Clamp velocity to max speed (considering afterburner)
                 const currentMaxSpeed = controlParams.maxSpeed * (afterburnerInput ? controlParams.afterburnerMultiplier : 1.0);
                 if (playerVelocity.lengthSq() > currentMaxSpeed * currentMaxSpeed) {
                     if(playerVelocity.lengthSq() > 1e-6) playerVelocity.normalize().multiplyScalar(currentMaxSpeed);
                 }
 
-                // Apply minimum speed decay if no thrust is applied
-                if (thrustInput < 0.1 && !brakeInput) { // Use threshold for thrust input
+                if (thrustInput < 0.1 && !brakeInput) { 
                     if (playerVelocity.lengthSq() < controlParams.minSpeed * controlParams.minSpeed && playerVelocity.lengthSq() > 0.01) {
-                         playerVelocity.multiplyScalar(0.9); // Decay slowly
+                         playerVelocity.multiplyScalar(0.9); 
                          if(playerVelocity.lengthSq() < 0.01) playerVelocity.set(0,0,0);
                     }
                 }
-
-                // Update aircraft position based on velocity
                 aircraftModel.position.addScaledVector(playerVelocity, deltaTime);
 
-                // --- World Boundary Check (Wrap Around) ---
                 if (aircraftModel.position.x > WORLD_BOUNDARY) { aircraftModel.position.x = -WORLD_BOUNDARY + 1; }
                 else if (aircraftModel.position.x < -WORLD_BOUNDARY) { aircraftModel.position.x = WORLD_BOUNDARY - 1; }
                 if (aircraftModel.position.z > WORLD_BOUNDARY) { aircraftModel.position.z = -WORLD_BOUNDARY + 1; }
                 else if (aircraftModel.position.z < -WORLD_BOUNDARY) { aircraftModel.position.z = WORLD_BOUNDARY - 1; }
 
-                // --- Collision Detection & Crash Reset ---
                 if (terrainMesh) {
                     try {
                         const terrainHeightColl = getProceduralTerrainHeight(aircraftModel.position.x, aircraftModel.position.z);
                         const effectiveGroundLevel = Math.max(terrainHeightColl, WATER_LEVEL);
 
                         if (aircraftModel.position.y < effectiveGroundLevel + AIRCRAFT_GROUND_BUFFER) {
-                            // Check for crash velocity
                             if (playerVelocity.y < CRASH_VELOCITY_THRESHOLD) {
-                                if (!isCrashing) { // Only trigger once per crash
+                                if (!isCrashing) { 
                                     console.log("CRASH DETECTED!");
                                     isCrashing = true;
-                                    triggerCrashExplosion(aircraftModel.position); // Trigger explosion immediately
-                                    aircraftModel.visible = false; // Hide the aircraft model
+                                    triggerCrashExplosion(aircraftModel.position); 
+                                    aircraftModel.visible = false; 
 
-                                    // Stop the plane instantly
                                     playerVelocity.set(0, 0, 0);
                                     playerAngularVelocity.set(0, 0, 0);
 
-                                    // Schedule the reset after a delay
-                                    if (crashResetTimeout) clearTimeout(crashResetTimeout); // Clear previous timeout if any
+                                    if (crashResetTimeout) clearTimeout(crashResetTimeout); 
                                     crashResetTimeout = setTimeout(resetSimulation, CRASH_RESET_DELAY);
                                 }
                             } else {
-                                // Normal ground interaction (bounce/stop)
                                 aircraftModel.position.y = effectiveGroundLevel + AIRCRAFT_GROUND_BUFFER;
                                 if (playerVelocity.y < 0) {
-                                    playerVelocity.y *= -0.2; // Small bounce
+                                    playerVelocity.y *= -0.2; 
                                     playerVelocity.x *= 0.8;
                                     playerVelocity.z *= 0.8;
                                     playerAngularVelocity.multiplyScalar(0.5);
@@ -680,16 +646,13 @@ function animate() {
                     } catch(e) {
                         console.error("Collision detection error:", e);
                     }
-                } // End Collision Check
-
+                } 
             } catch (error) { console.error("Error during physics/position update:", error); }
-        } // End if (!isCrashing)
+        } 
 
-        // --- HUD Calculations (Always update based on current state) ---
         currentSpeed = playerVelocity.length();
         if (terrainMesh) { try { const terrainHeight = getProceduralTerrainHeight(aircraftModel.position.x, aircraftModel.position.z); const groundLevel = Math.max(terrainHeight, WATER_LEVEL); currentAltitude = Math.max(0, aircraftModel.position.y - groundLevel); } catch (e) { currentAltitude = aircraftModel.position.y; } } else { currentAltitude = aircraftModel.position.y; }
 
-        // --- Update Edge Fog (Always update) ---
         if (scene.fog instanceof THREE.Fog) {
             const distSq = aircraftModel.position.x * aircraftModel.position.x + aircraftModel.position.z * aircraftModel.position.z;
             const dist = Math.sqrt(distSq);
@@ -699,35 +662,28 @@ function animate() {
             scene.fog.far = THREE.MathUtils.lerp(controlParams.baseFogFar, controlParams.baseFogFar * controlParams.edgeFogFarFactor, fogFactor);
         }
 
-        // --- Animate Volcano Light (Always update) ---
         if (volcanoLight) { volcanoLight.intensity = 2.5 + Math.sin(clock.elapsedTime * 2.5) * 1.0; volcanoLight.color.setHSL(0.03 + Math.sin(clock.elapsedTime * 0.6) * 0.03, 1, 0.55); }
 
-        // --- Camera Follow (Always update) ---
         try {
             const relativeCameraOffset = new THREE.Vector3(0, 7, 20);
-            const aircraftPosition = aircraftModel.position; // Use current position even if crashed
-            const aircraftQuaternion = aircraftModel.quaternion; // Use current orientation
+            const aircraftPosition = aircraftModel.position; 
+            const aircraftQuaternion = aircraftModel.quaternion; 
             const cameraOffset = relativeCameraOffset.clone().applyQuaternion(aircraftQuaternion);
             const targetCameraPosition = aircraftPosition.clone().add(cameraOffset);
-            const lerpFactor = 1.0 - Math.pow(1.0 - controlParams.cameraSmoothness, deltaTime * 60); // Frame-rate independent lerp
+            const lerpFactor = 1.0 - Math.pow(1.0 - controlParams.cameraSmoothness, deltaTime * 60); 
             camera.position.lerp(targetCameraPosition, lerpFactor);
             camera.lookAt(aircraftPosition);
         } catch (error) { console.error("Error during camera update:", error); }
+    } 
 
-    } // End if(aircraftModel)
-
-    // --- Update HUD (Always update) ---
     const speedElement = document.getElementById('speed-value');
     const altitudeElement = document.getElementById('altitude-value');
     if (speedElement) speedElement.textContent = currentSpeed.toFixed(1);
     if (altitudeElement) altitudeElement.textContent = currentAltitude.toFixed(1);
 
-
-    // --- Render ---
     try { if (typeof THREE !== 'undefined' && renderer && scene && camera) { renderer.render(scene, camera); } else { console.error("RENDER: Skipping render! Missing core object."); } } catch (renderError) { console.error("ERROR DURING RENDER:", renderError); }
 
 } // --- End function animate ---
 
 // --- Start Asset Loading Process ---
 console.log("Requesting asset loading...");
-
