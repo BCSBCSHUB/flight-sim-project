@@ -6,7 +6,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the 'master' branch
   push:
-    branches: ['master'] # *** MODIFIED: Changed from 'main' to 'master' ***
+    branches: ['master']
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -50,6 +50,27 @@ jobs:
         run: npm ci
         # Or use: yarn install --frozen-lockfile
         # Or use: pnpm install --frozen-lockfile
+
+      # DEBUG: List files in the current directory before building
+      - name: List files in workspace
+        run: |
+          pwd
+          ls -la
+          echo "--- Checking for main.js specifically ---"
+          if [ -f "./main.js" ]; then
+            echo "main.js FOUND in current directory."
+          else
+            echo "main.js NOT FOUND in current directory."
+          fi
+          echo "--- Checking for index.html specifically ---"
+          if [ -f "./index.html" ]; then
+            echo "index.html FOUND in current directory."
+            echo "--- Contents of script tag in index.html ---"
+            grep -i "<script.*src=.*main.js" ./index.html || echo "Script tag for main.js not found in index.html"
+          else
+            echo "index.html NOT FOUND in current directory."
+          fi
+          echo "-------------------------------------------"
 
       # Step 4: Build the project using the build script from package.json
       - name: Build
