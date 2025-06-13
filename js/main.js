@@ -238,12 +238,14 @@ function setupJoysticks() {
         const force = distance / maxDistance; // Normalized force (0 to 1)
 
         // Horizontal movement for Roll (A/D like)
-        touchControls.roll = Math.cos(angle) * force;
+        // Controls inverted for mobile layout
+        touchControls.roll = -Math.cos(angle) * force;
 
         // Vertical movement for Pitch (W/S like)
-        // Stick UP (angle PI/2) -> sin(angle)=1 -> pitch = force (positive, nose up)
-        // Stick DOWN (angle 3PI/2) -> sin(angle)=-1 -> pitch = -force (negative, nose down)
-        touchControls.pitch = Math.sin(angle) * force;
+        // Controls inverted for mobile layout
+        // Stick UP (angle PI/2) -> sin(angle)=1 -> pitch = -force (nose down)
+        // Stick DOWN (angle 3PI/2) -> sin(angle)=-1 -> pitch = force (nose up)
+        touchControls.pitch = -Math.sin(angle) * force;
     });
 
     joystickLeft.on('end', () => {
