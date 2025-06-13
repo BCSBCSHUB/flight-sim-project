@@ -549,8 +549,8 @@ function animate() {
                     afterburnerInput = touchControls.afterburner; // Use the value from touchControls
                 } else {
                     // Keyboard controls
-                    if (keys['w']) pitchInput = 1.0;  // W = Pitch Up (user confirmed this preference)
-                    if (keys['s']) pitchInput = -1.0; // S = Pitch Down
+                    if (keys['w']) pitchInput = -1.0; // W = Pitch Down (inverted scheme)
+                    if (keys['s']) pitchInput = 1.0;  // S = Pitch Up
                     if (keys['a']) rollInput = 1.0;   
                     if (keys['d']) rollInput = -1.0;  
                     // if (keys['q']) yawInput = 1.0; 
