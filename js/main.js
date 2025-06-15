@@ -132,6 +132,7 @@ try {
     explosionFolder.addColor(controlParams, 'explosionColor').onChange(updateExplosionMaterialColor);
     explosionFolder.close();
     gui.add(controlParams, 'cameraSmoothness', 0.01, 0.5, 0.01);
+    gui.close();
 } catch (e) { console.error("Error initializing lil-gui:", e); }
 //---------------------
 
